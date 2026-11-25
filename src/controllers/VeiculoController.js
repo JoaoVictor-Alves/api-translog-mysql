@@ -4,11 +4,10 @@ const VeiculoView = require("../views/VeiculoView");
 class VeiculoController {
     static tratarErro(res, erro) {
         if (erro.code === "ER_DUP_ENTRY" || erro.errno === 1062) {
-            return res.status(409).json(VeiculoView.erro("conflito (409): Este cd_placa já foi cadastrado na tabela tb_veiculos!", 409));
+            return res.status(409).json(VeiculoView.erro("conflito (409): Este cd_placa já foi cadastrada na tabela tb_veiculos!", 409));
         }
         return res.status(500).json(VeiculoView.erro(`Falha interna no servidor: ${erro.message}`, 500));
     }
-
     static async listarVeiculo(req, res) {
         try {
             const { ds_categoria } = req.query;
@@ -35,6 +34,33 @@ class VeiculoController {
             if (erro.code === "ER_DUP_ENTRY" || erro.errno === 1062) {
                 return res.status(500).json(VeiculoView.erro(`Falha interna no servidor: ${erro.message}`, 500));
             }
+        }
+    }
+
+    static async cadastrar(req, res) {
+        try {
+            const { cd_placa, nm_modelo, ds_categoria, vl_diaria_frete, qt_quilometragem } = req.body;
+            if (!cd_placa || !nm_modelo || !ds_categoria) {
+                return res.status(400).json(VeiculoView.erro("Os campos cd|_placa, nm_modelo, ds_categoria são obrigatórios para o registro", 404));
+            }
+            const valorFrete = Number(vl_diaria_frete);
+            const quantidadeKm = qt_quilometragem !== underfined ? parseInt (qt_quilometragem, 10) : 0;
+            if (isNaN(valorFrete) || valorFrete <= 0 || isNaN (quantidadeKm) || quantidadeKm < 0) {
+                return res.status(422).json(VeiculoView.erro("Erro 422: vl_diaria_frete deve ser maior que zero e qt_quilometragem não pode ser de forma negativa.", 422));
+            }
+            const novoRegistro = await VeiculoModel.cadastrar({
+                cd_placa: String(cd_placa).trim.toUpperCase(),
+                nm_modelo: String(nm_modelo).trim(),
+                ds_categoria: String(ds_categoria).trim(),
+                vl_diaria_frete: valorFrete,
+                qt_quilometragem: quantidadeKm
+            });
+            return res.status(201).json(VeiculoView.sucesso("Registro cadastrado com sucesso.", novoRegistro, 201));
+        } catch (erro) {
+             if (erro.code === "ER_DUP_ENTRY" || erro.errno === 1062) {
+                return res.status(409).json(VeiculoView.erro("conflito (409): este cd_placa ja foi cadastrada na tabela tb_veiculos!", 409));
+             }
+             return res.status(500).json(VeiculoView.erro(`Falha interna no servidor: ${erro.message}`, 500));
         }
     }
 }

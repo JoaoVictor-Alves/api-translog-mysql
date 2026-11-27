@@ -63,4 +63,16 @@ class VeiculoController {
              return res.status(500).json(VeiculoView.erro(`Falha interna no servidor: ${erro.message}`, 500));
         }
     }
+
+    static async substituir(req, res) {
+        try {
+            const id_veiculo = parseInt(req.params.id, 10);
+            const { cd_placa, nm_modelo, ds_categoria, vl_diaria_frete, qt_quilometragem } = req.body;
+            const valorFrete = Number(vl_diaria_frete);
+            const quantidadeKm = parseInt(qt_quilometragem, 10);
+            if (!cd_placa || !nm_modelo || !ds_categoria || isNaN (valorFrete) || valorFrete <= 0 || isNaN(quantidadeKm) || quantidadeKm < 0) {
+                return res.status(400).json(VeiculoView.erro("A atualização tem quer todos os campos preenchidor.", 400));
+            } 
+        }
+    }
 }

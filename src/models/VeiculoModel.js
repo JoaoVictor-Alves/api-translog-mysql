@@ -27,5 +27,11 @@ class VeiculoModel {
         const [resultado] = await pool.execute(sql, valores);
         return { id_veiculo: resultado.insertId, ...veiculo};
     }
+    static async substituirCompleto (id_veiculo, veiculo) {
+        const sql = "UPDATE tb_veiculos SET cd_placa = ?, nm_modelo = ?,  ds_categoria = ?, vl_diaria_frete = ?, qt_quilometragem = ? WHERE id_veiculo = ?";
+        const valores = [veiculo.cd_placa, veiculo.nm_produto, veiculo.ds_categoria, veiculo.vl_diaria_frete, veiculo.qt_quilometragem];
+        const [resultado] = await pool.execute(sql, valores);
+        return resultado.affectedRows;
+    }
 }
 module.exports = VeiculoModel;

@@ -71,8 +71,29 @@ class VeiculoController {
             const valorFrete = Number(vl_diaria_frete);
             const quantidadeKm = parseInt(qt_quilometragem, 10);
             if (!cd_placa || !nm_modelo || !ds_categoria || isNaN (valorFrete) || valorFrete <= 0 || isNaN(quantidadeKm) || quantidadeKm < 0) {
-                return res.status(400).json(VeiculoView.erro("A atualização tem quer todos os campos preenchidor.", 400));
-            } 
+                return res.status(400).json(VeiculoView.erro("A atualização tem quer todos os campos preenchidos.", 400));
+            }
+            if (isNaN(valorFrete) || valorFrete <= 0 || isNaN (quantidadeKm) || quantidadeKm < 0) {
+                return res.status(422).json(VeiculoView.erro("Erro 422: vl_diaria_frete deve ser maior que zero e qt_quilometragem não pode ser de forma negativa.", 422));
+            }
+            const linhasAfetadas = await VeiculoModel.substituirCompleto
+            ( id_veiculo, {
+                cd_placa: String(cd_placa).trim().toUpperCase(),
+                nm_modelo: String(nm_modelo).trim(),
+                ds_categoria: String(ds_categoria).trim(),
+                vl_diaria_frete: valorFrete,
+                qt_quilometragem: quantidadeKm
+                });
+            if (linhasAfetadas === 0) {
+                return res.status(404).json(VeiculoView.erro(`Registro ${id_veiculo} não encontrado no banco.`, 404));
+            }
+            const registroAtualizado = await VeiculoModel.buscarPorId(id_veiculo);
+            return res.status(200).json(VeiculoView.sucesso("Registro substituído com sucesso.", registroAtualizado, 200));
+
+        } catch (erro) {
+            if (erro.code === "ER_DUP_ENTRY" || erro.errno === 1062) {
+            return res.status(409).json(VeiculoView.erro("conflito (409): Este cd_placa já foi cadastrada na tabela tb_veiculos!", 409));
+            }
         }
     }
 }
